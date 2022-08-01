@@ -10,7 +10,9 @@ from recipes.models import Ingredient, Tag, Recipe, Favorite, ShoppingCart
 
 from .mixins import ListCreateDestroyMixin
 from .permissions import IsAdminOrReadOnly
-from .serializers import FavoriteRecipeSerializer, IngredientSerializer, RecipeSerializer, TagSerializer, ShoppingCartSerializer
+from .serializers import (FavoriteRecipeSerializer, IngredientSerializer, 
+                            RecipeSerializer, RecipeCreateSerializer,
+                            TagSerializer, ShoppingCartSerializer)
 
 
 class TagViewSet(ListCreateDestroyMixin):
@@ -29,11 +31,25 @@ class IngredientViewSet(viewsets.ModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    permission_classes = [AllowAny]
-    serializer_class = RecipeSerializer
+    permission_classes = [IsAuthenticated]
     queryset = Recipe.objects.all()
     filter_backends = (filters.SearchFilter,)
     search_fields = ['author', 'tags']
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return RecipeSerializer
+        return RecipeCreateSerializer
+
+    @action(methods=['post'],
+            detail=True,
+            permission_classes=(IsAuthenticated),
+    )
+    def create_recipe(self, request):
+        serializer = RecipeCreateSerializer(request.user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=['POST', 'DELETE'],
             detail=True,

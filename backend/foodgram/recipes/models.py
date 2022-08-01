@@ -16,14 +16,6 @@ class Ingredient(models.Model):
         verbose_name='Единица измерения',
         help_text='Введите единицу измерения ингредиента'
     )
-    amount = models.PositiveSmallIntegerField(
-        validators=[
-            MinValueValidator(1, 'Минимальное количество ингредиента - 1'),
-        ],
-        verbose_name='Количество ингредиента',
-        help_text='Введите кол-во ингрединта;\
-            измените ед. измерения, если кол-во - дробное число'
-    )
 
     class Meta:
         ordering = ['name']
@@ -32,6 +24,12 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return self.name
+
+
+
+
+    # def __str__(self):
+    #     return self.ingredient
 
 
 class Tag(models.Model):
@@ -92,9 +90,11 @@ class Recipe(models.Model):
 
     ingredients = models.ManyToManyField(
         Ingredient,
+        through='IngredientInRecipe',
+        through_fields=('recipe', 'ingredient'),
         verbose_name='Ингредиенты',
         related_name='recipes',
-        help_text='Выберите ингредиенты, укажите кол-во и ед.измерения'
+        help_text='Выберите ингредиенты, укажите кол-во'
     )
 
     tags = models.ManyToManyField(
@@ -127,6 +127,32 @@ class Recipe(models.Model):
     def __str__(self):
         return self.text
 
+
+class IngredientInRecipe(models.Model):
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт',
+    )
+
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+        verbose_name='Ингредиент',
+    )
+
+    amount = models.PositiveSmallIntegerField(
+        validators=[
+            MinValueValidator(1, 'Минимальное количество ингредиента - 1'),
+        ],
+        verbose_name='Количество ингредиента',
+        help_text='Введите кол-во ингрединта'
+    )
+
+    class Meta:
+        #ordering = ['ingredient']
+        verbose_name = 'ingredient'
+        verbose_name_plural = 'ingredients'
 
 class Favorite(models.Model):
     """Модель Favorite"""

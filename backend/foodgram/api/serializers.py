@@ -1,7 +1,9 @@
+import json
 from django.shortcuts import get_object_or_404
+from drf_writable_nested.serializers import WritableNestedModelSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from recipes.models import Ingredient, Tag, Recipe, Favorite, ShoppingCart
+from recipes.models import Ingredient, IngredientInRecipe, Tag, Recipe, Favorite, ShoppingCart
 from users.serializers import UserSerializer
 
 
@@ -79,11 +81,30 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit')
 
 
+class IngredientForCreatingRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор модели Ingredient"""
+    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
+
+    class Meta:
+        model = IngredientInRecipe
+        fields = ('id', 'amount')
+
+
+class IngredientInRecipeSerializer(serializers.HyperlinkedModelSerializer):
+    """Сериализатор модели Ingredient"""
+    name = serializers.ReadOnlyField(source='ingredient.name')
+    measurement_unit = serializers.ReadOnlyField(source='ingredient.measurement_unit')
+
+    class Meta:
+        model = IngredientInRecipe
+        fields = ('id', 'name', 'measurement_unit', 'amount')
+
+
 class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор модели Recipe"""
     author = UserSerializer()
     tags = TagSerializer(many=True)
-    ingredients = IngredientSerializer(many=True)
+    ingredients = IngredientInRecipeSerializer(source='ingredientinrecipe_set', many=True)
     image = Base64ImageField(
         max_length=None, use_url=True,
     )
@@ -108,6 +129,36 @@ class RecipeSerializer(serializers.ModelSerializer):
         if obj.is_in_shopping_cart.exists():
             return True
         return False
+
+
+class RecipeCreateSerializer(WritableNestedModelSerializer, serializers.ModelSerializer):
+    ingredients = IngredientForCreatingRecipeSerializer(many=True, required=True)
+    tags = serializers.PrimaryKeyRelatedField(
+        many=True, required=True, queryset=Tag.objects.all()
+    )
+    image = Base64ImageField(
+        max_length=None, use_url=True, required=True
+    )
+    name = serializers.CharField(max_length=200, required=True)
+    text = serializers.CharField(required=True)
+    cooking_time = serializers.IntegerField(min_value=1)
+
+    class Meta:
+        model = Recipe
+        fields = ('ingredients', 'tags', 'image', 'name',
+                  'text', 'cooking_time',)
+        extra_kwargs = {'author': {'write_only': True}}
+
+    def create(self, validated_data):
+        tags = validated_data.pop('tags')
+        ingredients_data = validated_data.pop('ingredients')
+        recipe = Recipe.objects.create(author=self.context.get('request').user, **validated_data)
+        recipe.tags.set(tags)
+        for ingredient_data in ingredients_data:
+            ingredient = ((list(ingredient_data.items())[0])[1])
+            amount = ((list(ingredient_data.items())[1])[1])
+            IngredientInRecipe.objects.create(recipe=recipe, ingredient=ingredient, amount=amount)
+        return recipe
 
 
 class FavoriteRecipeSerializer(serializers.ModelSerializer):

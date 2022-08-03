@@ -1,4 +1,3 @@
-from ast import Sub
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import check_password
 from django_filters.rest_framework import DjangoFilterBackend
@@ -13,7 +12,8 @@ from rest_framework.views import APIView
 
 from .models import Subscription, User
 from .serializers import (UserRegistrationSerializer, UserSerializer,
-                          PasswordSerializer, SubscriptionSerializer, TokenSerializer)
+                          PasswordSerializer, SubscriptionSerializer,
+                          TokenSerializer)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -34,17 +34,16 @@ class UserViewSet(viewsets.ModelViewSet):
     def user_data(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
     @action(methods=['post'],
             detail=True,
-            permission_classes=(AllowAny,),
-    )
+            permission_classes=(AllowAny,),)
     def create_user(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
+
     @action(methods=['post', 'delete'],
             detail=True,
             permission_classes=(IsAuthenticated,),
@@ -52,18 +51,22 @@ class UserViewSet(viewsets.ModelViewSet):
     def subscribe(self, request, pk=None):
         if request.method == 'POST':
             serializer = SubscriptionSerializer(
-                data=request.data, context={'pk': pk, 'user': self.request.user}
+                data=request.data, context={
+                    'pk': pk, 'user': self.request.user
+                }
             )
             serializer.is_valid(raise_exception=True)
             serializer.save(
-                author_id=pk, 
+                author_id=pk,
                 user=self.request.user
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             user = self.request.user
             author = get_object_or_404(User, pk=pk)
-            subscription = Subscription.objects.filter(user=user, author=author)
+            subscription = Subscription.objects.filter(
+                user=user, author=author
+            )
             if subscription:
                 subscription.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
@@ -71,7 +74,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 return Response(
                     {'Вы не были подписаны на этого пользователя'},
                     status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class APIChangePassword(APIView):
@@ -83,12 +85,13 @@ class APIChangePassword(APIView):
         user = get_object_or_404(
             User, username=request.user.username
         )
-        if check_password(serializer.validated_data['current_password'],
-            user.password):
+        if check_password(
+                serializer.validated_data['current_password'], user.password
+        ):
             user.set_password(serializer.validated_data['new_password'])
             user.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(serializer.errors, 
+        return Response(serializer.errors,
                         status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -100,13 +103,15 @@ class APISendToken(APIView):
         serializer = TokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = get_object_or_404(
-            User, email = serializer.validated_data['email']
+            User, email=serializer.validated_data['email']
         )
-        if check_password(serializer.validated_data['password'],
-            user.password):
+        if check_password(
+                serializer.validated_data['password'], user.password):
             token = Token.objects.create(user=user)
-            return Response({'auth_token': str(token)}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, 
+            return Response(
+                {'auth_token': str(token)}, status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors,
                         status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -121,4 +126,3 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
         user = self.request.user
         queryset = Subscription.objects.filter(user=user)
         return queryset
-

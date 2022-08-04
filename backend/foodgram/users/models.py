@@ -1,7 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-
 GUEST = 'guest'
 USER = 'user'
 ADMIN = 'admin'
@@ -11,8 +10,9 @@ ROLE_CHOICES = (
     (ADMIN, 'admin'),
 )
 
+
 class User(AbstractUser):
-    """Модель User"""
+    """Модель Пользователь"""
     email = models.EmailField(
         unique=True,
         max_length=254,
@@ -47,11 +47,20 @@ class User(AbstractUser):
         verbose_name='Роль пользователя'
     )
 
-    # is_subscribed = models.BooleanField(default=False)
-    
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
+    @property
+    def is_guest(self):
+        return self.role == GUEST
+
+    @property
+    def is_user(self):
+        return self.role == USER
+
+    @property
+    def is_admin(self):
+        return self.role == ADMIN or self.is_superuser
 
     class Meta:
         constraints = [
@@ -67,6 +76,7 @@ class User(AbstractUser):
 
 
 class Subscription(models.Model):
+    """Модель Подписка на автора"""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

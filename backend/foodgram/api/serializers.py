@@ -1,28 +1,26 @@
 from django.shortcuts import get_object_or_404
-from drf_writable_nested.serializers import WritableNestedModelSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from recipes.models import (Ingredient, IngredientInRecipe,
-                            Tag, Recipe, Favorite, ShoppingCart)
+
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                            ShoppingCart, Tag)
 from users.serializers import UserSerializer
 
 
 class Base64ImageField(serializers.ImageField):
     """
-    A Django REST framework field for handling image-uploads through raw post data.
-    It uses base64 for encoding and decoding the contents of the file.
-
-    Heavily based on
-    https://github.com/tomchristie/django-rest-framework/pull/1268
-
-    Updated for Django REST framework 3.
+    Поле для обработки загрузки изображений через
+    необработанные данные.
+    Bспользует base64 для кодирования и декодирования содержимого файла.
     """
 
     def to_internal_value(self, data):
-        from django.core.files.base import ContentFile
+
         import base64
-        import six
         import uuid
+
+        import six
+        from django.core.files.base import ContentFile
 
         if isinstance(data, six.string_types):
             if 'data:' in data and ';base64,' in data:
@@ -72,7 +70,10 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientForCreatingRecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор модели Ingredient"""
+    """
+    Сериализатор модели IngredientInRecipe.
+    Используется для создания рецепта.
+    """
     id = serializers.IntegerField(source='ingredient_id')
 
     class Meta:
@@ -81,7 +82,11 @@ class IngredientForCreatingRecipeSerializer(serializers.ModelSerializer):
 
 
 class IngredientInRecipeSerializer(serializers.HyperlinkedModelSerializer):
-    """Сериализатор модели Ingredient"""
+    """
+    Сериализатор модели IngredientInRecipe.
+    Применяется для вывода всех данных модели Ингредиент,
+    которые есть в рецепте.
+    """
     id = serializers.ReadOnlyField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
@@ -94,7 +99,9 @@ class IngredientInRecipeSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор модели Recipe"""
+    """
+    Сериализатор модели Recipe для получение списка или одного рецепта.
+    """
     author = UserSerializer()
     tags = TagSerializer(many=True)
     ingredients = IngredientInRecipeSerializer(
@@ -126,8 +133,10 @@ class RecipeSerializer(serializers.ModelSerializer):
         return False
 
 
-class RecipeCreateSerializer(WritableNestedModelSerializer,
-                             serializers.ModelSerializer):
+class RecipeCreateSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор модели Recipe для создания рецепта.
+    """
     author = serializers.ReadOnlyField(source='recipe.author')
     ingredients = IngredientForCreatingRecipeSerializer(
         source='ingredient_in_recipe', many=True
@@ -177,11 +186,15 @@ class RecipeCreateSerializer(WritableNestedModelSerializer,
 
 
 class FavoriteRecipeSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор модели Favorite. Позволяет добавить рецепт в Избранное.
+    """
     id = serializers.ReadOnlyField(source='recipe.id')
     name = serializers.ReadOnlyField(source='recipe.name')
     cooking_time = serializers.ReadOnlyField(source='recipe.cooking_time')
     image = Base64ImageField(
-        max_length=None, use_url=True, read_only=True
+        source='recipe.image', max_length=None, use_url=True,
+        required=False, read_only=True
     )
 
     class Meta:
@@ -203,7 +216,10 @@ class FavoriteRecipeSerializer(serializers.ModelSerializer):
 
 
 class ShoppingCartSerializer(serializers.ModelSerializer):
-    """Сериализатор модели ShoppingCart"""
+    """
+    Сериализатор модели ShoppingCart.
+    Позволяет добавить рецепт в Список покупок.
+    """
     id = serializers.ReadOnlyField(source='recipe.id')
     name = serializers.ReadOnlyField(source='recipe.name')
     cooking_time = serializers.ReadOnlyField(source='recipe.cooking_time')

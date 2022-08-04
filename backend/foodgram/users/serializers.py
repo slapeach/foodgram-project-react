@@ -1,7 +1,9 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from .models import Subscription, User
+
 from recipes.models import Recipe
+
+from .models import Subscription, User
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -45,6 +47,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 
 class PasswordSerializer(serializers.ModelSerializer):
+    """Сериализатор модели User для смены пароля"""
     current_password = serializers.CharField(max_length=150, required=True)
     new_password = serializers.CharField(max_length=150, required=True)
 
@@ -64,6 +67,7 @@ class TokenSerializer(serializers.Serializer):
 
 
 class RecipeSimpleSerializer(serializers.ModelSerializer):
+    """Сериализатор модели Recipe вывода данных о рецепте"""
 
     class Meta:
         model = Recipe
@@ -71,6 +75,7 @@ class RecipeSimpleSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
+    """Сериализатор модели Subscription для создания подписки."""
     email = serializers.ReadOnlyField(source='author.email')
     id = serializers.ReadOnlyField(source='author.id')
     username = serializers.ReadOnlyField(source='author.username')

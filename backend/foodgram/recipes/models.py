@@ -5,7 +5,7 @@ from users.models import User
 
 
 class Ingredient(models.Model):
-    """Модель Ingredient"""
+    """Модель Ингредиент"""
     name = models.CharField(
         max_length=200,
         verbose_name='Ингредиент',
@@ -26,14 +26,8 @@ class Ingredient(models.Model):
         return self.name
 
 
-
-
-    # def __str__(self):
-    #     return self.ingredient
-
-
 class Tag(models.Model):
-    """Модель Tag"""
+    """Модель Тег"""
     name = models.CharField(
         unique=True,
         max_length=200,
@@ -62,7 +56,7 @@ class Tag(models.Model):
 
 
 class Recipe(models.Model):
-    """Модель Recipe"""
+    """Модель Рецепт"""
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -118,7 +112,6 @@ class Recipe(models.Model):
         db_index=True
     )
 
-
     class Meta:
         ordering = ['-pub_date']
         verbose_name = 'recipe'
@@ -129,6 +122,7 @@ class Recipe(models.Model):
 
 
 class IngredientInRecipe(models.Model):
+    """Модель Ингредиента в рецепте"""
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -152,12 +146,12 @@ class IngredientInRecipe(models.Model):
     )
 
     class Meta:
-        #ordering = ['ingredient']
         verbose_name = 'ingredient'
         verbose_name_plural = 'ingredients'
 
+
 class Favorite(models.Model):
-    """Модель Favorite"""
+    """Модель Избранное"""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -183,7 +177,7 @@ class Favorite(models.Model):
 
 
 class ShoppingCart(models.Model):
-    """Модель ShoppingCart"""
+    """Модель Список покупок"""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

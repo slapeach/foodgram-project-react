@@ -1,23 +1,26 @@
-from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import check_password
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status, viewsets, generics
+from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import (AllowAny, IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Subscription, User
-from .serializers import (UserRegistrationSerializer, UserSerializer,
-                          PasswordSerializer, SubscriptionSerializer,
-                          TokenSerializer)
+from .serializers import (PasswordSerializer, SubscriptionSerializer,
+                          TokenSerializer, UserRegistrationSerializer,
+                          UserSerializer)
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    """Вьюсет сериализатора UserSerializer"""
+    """
+    Вьюсет для urls 'users'.
+    Позволяет получить список пользователей,
+    профиль конкретного пользователя.
+    """
     permission_classes = (AllowAny,)
     pagination_class = PageNumberPagination
     queryset = User.objects.all()
@@ -32,6 +35,9 @@ class UserViewSet(viewsets.ModelViewSet):
             permission_classes=(IsAuthenticated,),
             url_path='me',)
     def user_data(self, request):
+        """
+        Метод для вывода данных текущего пользователя.
+        """
         serializer = UserSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -39,6 +45,9 @@ class UserViewSet(viewsets.ModelViewSet):
             detail=True,
             permission_classes=(AllowAny,),)
     def create_user(self, request):
+        """
+        Метод для регистрации пользователя.
+        """
         serializer = UserRegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -49,6 +58,10 @@ class UserViewSet(viewsets.ModelViewSet):
             permission_classes=(IsAuthenticated,),
             url_path='subscribe',)
     def subscribe(self, request, pk=None):
+        """
+        Метод для создания Подписки на автора,
+        удаления Подписки на атвора.
+        """
         if request.method == 'POST':
             serializer = SubscriptionSerializer(
                 data=request.data, context={
@@ -77,6 +90,9 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class APIChangePassword(APIView):
+    """
+    Вьюкласс для смены пароля пользователя.
+    """
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
@@ -96,7 +112,9 @@ class APIChangePassword(APIView):
 
 
 class APISendToken(APIView):
-    """Вьюкласс сериализатора TokenSerializer"""
+    """
+    Вьюкласс для получения токена пользователем.
+    """
     permission_classes = (AllowAny,)
 
     def post(self, request):
@@ -108,6 +126,7 @@ class APISendToken(APIView):
         if check_password(
                 serializer.validated_data['password'], user.password):
             token = Token.objects.create(user=user)
+            # serializer.save(role=USER)
             return Response(
                 {'auth_token': str(token)}, status=status.HTTP_201_CREATED
             )
@@ -116,6 +135,7 @@ class APISendToken(APIView):
 
 
 class SubscriptionViewSet(viewsets.ModelViewSet):
+    """Вьюсет для создания/удаления Подписки на автора."""
     permission_classes = (IsAuthenticated,)
     pagination_class = PageNumberPagination
     serializer_class = SubscriptionSerializer

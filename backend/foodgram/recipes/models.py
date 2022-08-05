@@ -146,6 +146,12 @@ class IngredientInRecipe(models.Model):
     )
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='unique_ingredient_in_recipe',
+            ),
+        ]
         verbose_name = 'ingredient'
         verbose_name_plural = 'ingredients'
 
@@ -190,5 +196,11 @@ class ShoppingCart(models.Model):
     )
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_recipe_in_shopping_cart',
+            ),
+        ]
         verbose_name = 'shopping cart'
         verbose_name_plural = 'shopping carts'

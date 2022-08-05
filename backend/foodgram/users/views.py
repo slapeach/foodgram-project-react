@@ -80,7 +80,7 @@ class UserViewSet(viewsets.ModelViewSet):
             subscription = Subscription.objects.filter(
                 user=user, author=author
             )
-            if subscription:
+            if subscription.exists():
                 subscription.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
             else:
@@ -126,7 +126,6 @@ class APISendToken(APIView):
         if check_password(
                 serializer.validated_data['password'], user.password):
             token = Token.objects.create(user=user)
-            # serializer.save(role=USER)
             return Response(
                 {'auth_token': str(token)}, status=status.HTTP_201_CREATED
             )

@@ -5,43 +5,7 @@ from rest_framework.validators import UniqueValidator
 from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
                             ShoppingCart, Tag)
 from users.serializers import UserSerializer
-
-
-class Base64ImageField(serializers.ImageField):
-    """
-    Поле для обработки загрузки изображений через
-    необработанные данные.
-    Bспользует base64 для кодирования и декодирования содержимого файла.
-    """
-
-    def to_internal_value(self, data):
-
-        import base64
-        import uuid
-
-        import six
-        from django.core.files.base import ContentFile
-
-        if isinstance(data, six.string_types):
-            if 'data:' in data and ';base64,' in data:
-                header, data = data.split(';base64,')
-            try:
-                decoded_file = base64.b64decode(data)
-            except TypeError:
-                self.fail('invalid_image')
-            file_name = str(uuid.uuid4())[:12]
-            file_extension = self.get_file_extension(file_name, decoded_file)
-            complete_file_name = "%s.%s" % (file_name, file_extension, )
-            data = ContentFile(decoded_file, name=complete_file_name)
-        return super(Base64ImageField, self).to_internal_value(data)
-
-    def get_file_extension(self, file_name, decoded_file):
-        import imghdr
-
-        extension = imghdr.what(file_name, decoded_file)
-        extension = "jpg" if extension == "jpeg" else extension
-
-        return extension
+from .fields import Base64ImageField
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -123,14 +87,10 @@ class RecipeSerializer(serializers.ModelSerializer):
                   )
 
     def get_is_favorited(self, obj):
-        if obj.favorites.exists():
-            return True
-        return False
+        return obj.favorites.exists()
 
     def get_is_in_shopping_cart(self, obj):
-        if obj.is_in_shopping_cart.exists():
-            return True
-        return False
+        return obj.is_in_shopping_cart.exists()
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
@@ -156,10 +116,37 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         fields = ('ingredients', 'tags', 'image', 'name',
                   'text', 'cooking_time', 'author')
 
+    def validate(self, attrs):
+        tags = attrs['tags']
+        ingredients = attrs['ingredient_in_recipe']
+        if len(set(tags)) != len(tags):
+            raise serializers.ValidationError(
+                'Установленные в рецепте теги повторяются'
+            )
+        if len(ingredients) > 1:
+            ingredient_id = ingredients[0]['ingredient_id']
+            for ingredient in ingredients[1:]:
+                if ingredient_id == ingredient['ingredient_id']:
+                    raise serializers.ValidationError(
+                        'Установленные в рецепте ингредиенты повторяются'
+                    )
+        return super().validate(attrs)
+
     def to_representation(self, instance):
         recipe = super().to_representation(instance)
         recipe = RecipeSerializer(instance).data
         return recipe
+
+    def create_ingredient_in_recipe(self, recipe, ingredients_data):
+        new_ingredients = [
+            IngredientInRecipe(
+                recipe=recipe,
+                ingredient_id=ingredient_data['ingredient_id'],
+                amount=ingredient_data['amount'],
+            )
+            for ingredient_data in ingredients_data
+        ]
+        IngredientInRecipe.objects.bulk_create(new_ingredients)
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
@@ -168,8 +155,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             author=self.context.get('request').user, **validated_data
         )
         recipe.tags.set(tags)
-        for ingredients in ingredients_data:
-            IngredientInRecipe.objects.create(recipe=recipe, **ingredients)
+        self.create_ingredient_in_recipe(recipe, ingredients_data)
         return recipe
 
     def update(self, instance, validated_data):
@@ -180,8 +166,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         )
         instance.tags.set(tags)
         IngredientInRecipe.objects.filter(recipe=instance).delete()
-        for ingredients in ingredients_data:
-            IngredientInRecipe.objects.create(recipe=instance, **ingredients)
+        self.create_ingredient_in_recipe(instance, ingredients_data)
         return instance
 
 
@@ -224,7 +209,8 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
     name = serializers.ReadOnlyField(source='recipe.name')
     cooking_time = serializers.ReadOnlyField(source='recipe.cooking_time')
     image = Base64ImageField(
-        max_length=None, use_url=True, read_only=True
+        source='recipe.image', max_length=None, use_url=True,
+        required=False, read_only=True
     )
 
     class Meta:

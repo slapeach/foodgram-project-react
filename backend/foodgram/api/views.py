@@ -5,13 +5,14 @@ from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
-from recipes.models import Ingredient, IngredientInRecipe, Recipe, Tag
-
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe,
+                            Recipe, ShoppingCart, Tag)
 from .filters import RecipeFilter
-from .mixins import AddDelViewMixin, ListCreateDestroyMixin
+from .mixins import AddDelRecipeViewMixin, ListCreateDestroyMixin
 from .permissions import IsAdminOrReadOnly
-from .serializers import (IngredientSerializer, RecipeCreateSerializer,
-                          RecipeSerializer, TagSerializer)
+from .serializers import (FavoriteRecipeSerializer, IngredientSerializer,
+                          RecipeCreateSerializer, RecipeSerializer,
+                          ShoppingCartSerializer, TagSerializer)
 
 
 class TagViewSet(ListCreateDestroyMixin):
@@ -37,7 +38,7 @@ class IngredientViewSet(viewsets.ModelViewSet):
     search_fields = ['^name']
 
 
-class RecipeViewSet(viewsets.ModelViewSet):
+class RecipeViewSet(viewsets.ModelViewSet, AddDelRecipeViewMixin):
     """
     Вьюсет для urls 'recipes'.
     Позволяет получить список рецептов/рецепт, создать,
@@ -64,8 +65,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         Метод для добавления рецепта в Избранное,
         удаления рецепта из Избранного.
         """
-        url_path = 'favorite'
-        return AddDelViewMixin.add_del_obj(self, pk, url_path)
+        serializer = FavoriteRecipeSerializer
+        queryset = Favorite.objects.all()
+        return self.add_del_obj(
+            self, pk, serializer, queryset
+        )
 
     @action(methods=['POST', 'DELETE'],
             detail=True,
@@ -76,8 +80,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         Метод для добавления рецепта в Список покупок,
         удаления рецепта из Списка покупок.
         """
-        url_path = 'shopping_cart'
-        return AddDelViewMixin.add_del_obj(self, pk, url_path)
+        serializer = ShoppingCartSerializer
+        queryset = ShoppingCart.objects.all()
+        return self.add_del_obj(
+            self, pk, serializer, queryset
+        )
 
     @action(methods=['GET'],
             detail=False,

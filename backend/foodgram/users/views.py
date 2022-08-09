@@ -11,11 +11,12 @@ from rest_framework.views import APIView
 
 from .models import Subscription, User
 from .serializers import (PasswordSerializer, SubscriptionSerializer,
-                          TokenSerializer, UserRegistrationSerializer,
-                          UserSerializer)
+                          UserRegistrationSerializer, UserSerializer)
+
+from djoser.views import UserViewSet as DjoserUserViewSet
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(DjoserUserViewSet):
     """
     Вьюсет для urls 'users'.
     Позволяет получить список пользователей,
@@ -30,34 +31,34 @@ class UserViewSet(viewsets.ModelViewSet):
             return UserSerializer
         return UserRegistrationSerializer
 
-    @action(methods=['get'],
-            detail=False,
-            permission_classes=(IsAuthenticated,),
-            url_path='me',)
-    def user_data(self, request):
-        """
-        Метод для вывода данных текущего пользователя.
-        """
-        serializer = UserSerializer(request.user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    # @action(methods=['get'],
+    #         detail=False,
+    #         permission_classes=(IsAuthenticated,),
+    #         url_path='me',)
+    # def user_data(self, request):
+    #     """
+    #     Метод для вывода данных текущего пользователя.
+    #     """
+    #     serializer = UserSerializer(request.user)
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(methods=['post'],
-            detail=True,
-            permission_classes=(AllowAny,),)
-    def create_user(self, request):
-        """
-        Метод для регистрации пользователя.
-        """
-        serializer = UserRegistrationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    # @action(methods=['post'],
+    #         detail=True,
+    #         permission_classes=(AllowAny,),)
+    # def create_user(self, request):
+    #     """
+    #     Метод для регистрации пользователя.
+    #     """
+    #     serializer = UserRegistrationSerializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=['post', 'delete'],
             detail=True,
             permission_classes=(IsAuthenticated,),
             url_path='subscribe',)
-    def subscribe(self, request, pk=None):
+    def subscribe(self, request, id=None):
         """
         Метод для создания Подписки на автора,
         удаления Подписки на атвора.
@@ -65,18 +66,18 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             serializer = SubscriptionSerializer(
                 data=request.data, context={
-                    'pk': pk, 'user': self.request.user
+                    'pk': id, 'user': self.request.user
                 }
             )
             serializer.is_valid(raise_exception=True)
             serializer.save(
-                author_id=pk,
+                author_id=id,
                 user=self.request.user
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             user = self.request.user
-            author = get_object_or_404(User, pk=pk)
+            author = get_object_or_404(User, pk=id)
             subscription = Subscription.objects.filter(
                 user=user, author=author
             )
@@ -111,26 +112,26 @@ class APIChangePassword(APIView):
                         status=status.HTTP_400_BAD_REQUEST)
 
 
-class APISendToken(APIView):
-    """
-    Вьюкласс для получения токена пользователем.
-    """
-    permission_classes = (AllowAny,)
+# class APISendToken(APIView):
+#     """
+#     Вьюкласс для получения токена пользователем.
+#     """
+#     permission_classes = (AllowAny,)
 
-    def post(self, request):
-        serializer = TokenSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = get_object_or_404(
-            User, email=serializer.validated_data['email']
-        )
-        if check_password(
-                serializer.validated_data['password'], user.password):
-            token = Token.objects.create(user=user)
-            return Response(
-                {'auth_token': str(token)}, status=status.HTTP_201_CREATED
-            )
-        return Response(serializer.errors,
-                        status=status.HTTP_400_BAD_REQUEST)
+#     def post(self, request):
+#         serializer = TokenSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         user = get_object_or_404(
+#             User, email=serializer.validated_data['email']
+#         )
+#         if check_password(
+#                 serializer.validated_data['password'], user.password):
+#             token = Token.objects.create(user=user)
+#             return Response(
+#                 {'auth_token': str(token)}, status=status.HTTP_201_CREATED
+#             )
+#         return Response(serializer.errors,
+#                         status=status.HTTP_400_BAD_REQUEST)
 
 
 class SubscriptionViewSet(viewsets.ModelViewSet):

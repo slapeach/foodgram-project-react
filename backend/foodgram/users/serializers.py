@@ -53,14 +53,14 @@ class PasswordSerializer(serializers.ModelSerializer):
         fields = ('current_password', 'new_password')
 
 
-class TokenSerializer(serializers.Serializer):
-    """Сериализатор модели User для получения токена"""
-    password = serializers.CharField(max_length=150, required=True)
-    email = serializers.CharField(max_length=150, required=True)
+# class TokenSerializer(serializers.Serializer):
+#     """Сериализатор модели User для получения токена"""
+#     password = serializers.CharField(max_length=150, required=True)
+#     email = serializers.CharField(max_length=150, required=True)
 
-    class Meta:
-        model = User
-        fields = ('email', 'password')
+#     class Meta:
+#         model = User
+#         fields = ('email', 'password')
 
 
 class RecipeSimpleSerializer(serializers.ModelSerializer):

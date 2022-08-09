@@ -23,6 +23,7 @@ class TagViewSet(ListCreateDestroyMixin):
     permission_classes = [IsAdminOrReadOnly]
     serializer_class = TagSerializer
     queryset = Tag.objects.all()
+    pagination_class = None
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
@@ -34,8 +35,9 @@ class IngredientViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
     serializer_class = IngredientSerializer
     queryset = Ingredient.objects.all()
+    pagination_class = None
     filter_backends = [filters.SearchFilter]
-    search_fields = ['^name']
+    search_fields = ['@name']
 
 
 class RecipeViewSet(viewsets.ModelViewSet, AddDelRecipeViewMixin):
@@ -68,7 +70,7 @@ class RecipeViewSet(viewsets.ModelViewSet, AddDelRecipeViewMixin):
         serializer = FavoriteRecipeSerializer
         queryset = Favorite.objects.all()
         return self.add_del_obj(
-            self, pk, serializer, queryset
+            pk, serializer, queryset
         )
 
     @action(methods=['POST', 'DELETE'],
@@ -83,7 +85,7 @@ class RecipeViewSet(viewsets.ModelViewSet, AddDelRecipeViewMixin):
         serializer = ShoppingCartSerializer
         queryset = ShoppingCart.objects.all()
         return self.add_del_obj(
-            self, pk, serializer, queryset
+            pk, serializer, queryset
         )
 
     @action(methods=['GET'],

@@ -99,7 +99,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     """
     author = serializers.ReadOnlyField(source='recipe.author')
     ingredients = IngredientForCreatingRecipeSerializer(
-        source='ingredient_in_recipe', many=True
+        source='ingredient_in_recipe', many=True,
     )
     tags = serializers.PrimaryKeyRelatedField(
         many=True, required=True, queryset=Tag.objects.all()
@@ -115,6 +115,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ('ingredients', 'tags', 'image', 'name',
                   'text', 'cooking_time', 'author')
+        lookup_field = 'ingredients__name'
 
     def validate(self, attrs):
         tags = attrs['tags']

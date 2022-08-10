@@ -1,8 +1,7 @@
 from django.contrib.auth.hashers import check_password
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import status, viewsets
-from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -12,8 +11,6 @@ from rest_framework.views import APIView
 from .models import Subscription, User
 from .serializers import (PasswordSerializer, SubscriptionSerializer,
                           UserRegistrationSerializer, UserSerializer)
-
-from djoser.views import UserViewSet as DjoserUserViewSet
 
 
 class UserViewSet(DjoserUserViewSet):
@@ -30,29 +27,6 @@ class UserViewSet(DjoserUserViewSet):
         if self.action in ['list', 'retrieve']:
             return UserSerializer
         return UserRegistrationSerializer
-
-    # @action(methods=['get'],
-    #         detail=False,
-    #         permission_classes=(IsAuthenticated,),
-    #         url_path='me',)
-    # def user_data(self, request):
-    #     """
-    #     Метод для вывода данных текущего пользователя.
-    #     """
-    #     serializer = UserSerializer(request.user)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
-
-    # @action(methods=['post'],
-    #         detail=True,
-    #         permission_classes=(AllowAny,),)
-    # def create_user(self, request):
-    #     """
-    #     Метод для регистрации пользователя.
-    #     """
-    #     serializer = UserRegistrationSerializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=['post', 'delete'],
             detail=True,
@@ -112,37 +86,9 @@ class APIChangePassword(APIView):
                         status=status.HTTP_400_BAD_REQUEST)
 
 
-# class APISendToken(APIView):
-#     """
-#     Вьюкласс для получения токена пользователем.
-#     """
-#     permission_classes = (AllowAny,)
-
-#     def post(self, request):
-#         serializer = TokenSerializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         user = get_object_or_404(
-#             User, email=serializer.validated_data['email']
-#         )
-#         if check_password(
-#                 serializer.validated_data['password'], user.password):
-#             token = Token.objects.create(user=user)
-#             return Response(
-#                 {'auth_token': str(token)}, status=status.HTTP_201_CREATED
-#             )
-#         return Response(serializer.errors,
-#                         status=status.HTTP_400_BAD_REQUEST)
-
-
 class SubscriptionViewSet(viewsets.ModelViewSet):
-    """Вьюсет для создания/удаления Подписки на автора."""
+    """Вьюсет для получения Подписок."""
     permission_classes = (IsAuthenticated,)
     pagination_class = PageNumberPagination
+    queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ('id',)
-
-    def get_queryset(self):
-        user = self.request.user
-        queryset = Subscription.objects.filter(user=user)
-        return queryset

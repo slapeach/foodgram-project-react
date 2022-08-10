@@ -19,7 +19,11 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def get_is_subscribed(self, obj):
-        return obj.subscribing.exists()
+        request = self.context.get('request')
+        if request is None or request.user.is_anonymous:
+            return False
+        return Subscription.objects.filter(
+            user=request.user, author=obj).exists()
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -51,16 +55,6 @@ class PasswordSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('current_password', 'new_password')
-
-
-# class TokenSerializer(serializers.Serializer):
-#     """Сериализатор модели User для получения токена"""
-#     password = serializers.CharField(max_length=150, required=True)
-#     email = serializers.CharField(max_length=150, required=True)
-
-#     class Meta:
-#         model = User
-#         fields = ('email', 'password')
 
 
 class RecipeSimpleSerializer(serializers.ModelSerializer):
@@ -105,8 +99,15 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         return super().validate(attrs)
 
     def get_is_subscribed(self, obj):
-        return obj.author.subscribing.exists()
+        request = self.context.get('request')
+        if request is None or request.user.is_anonymous:
+            return False
+        if request.method in ['POST']:
+            return Subscription.objects.filter(
+                user=request.user, author=obj).exists()
+        if request.method in ['GET']:
+            return Subscription.objects.filter(
+                user=request.user, author=obj.author).exists()
 
     def get_recipes_count(self, obj):
-        cnt = Recipe.objects.filter(author=obj.author.id).count()
-        return cnt
+        return Recipe.objects.filter(author=obj.author.id).count()

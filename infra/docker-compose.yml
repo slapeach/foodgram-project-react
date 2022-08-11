@@ -8,9 +8,9 @@ services:
     env_file:
       - ./.env
   backend:
-    build:
-      context: ../
-      dockerfile: backend/foodgram/Dockerfile
+    # build:
+    #   context: ../
+    #   dockerfile: backend/foodgram/Dockerfile
     image: alzania/foodgram_backend
     restart: always
     volumes:
@@ -21,9 +21,9 @@ services:
     env_file:
       - ./.env
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    # build:
+    #   context: ../frontend
+    #   dockerfile: Dockerfile
     image: alzania/foodgram_frontend
     restart: always
     volumes:

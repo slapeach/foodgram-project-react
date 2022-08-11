@@ -1,6 +1,5 @@
 import django_filters
 
-
 from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart
 
 

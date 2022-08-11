@@ -5,8 +5,8 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
-from recipes.models import (Favorite, Ingredient, IngredientInRecipe,
-                            Recipe, ShoppingCart, Tag)
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                            ShoppingCart, Tag)
 from .filters import IngredientFilter, RecipeFilter
 from .mixins import AddDelRecipeViewMixin, ListCreateDestroyMixin
 from .permissions import IsAdminOrReadOnly

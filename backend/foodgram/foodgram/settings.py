@@ -1,12 +1,13 @@
 import os
 
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = os.getenv('SECRET_KEY', '*')
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['51.250.17.195', 'foodgram.hopto.org', '127.0.0.1', 'localhost']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -128,3 +129,5 @@ DJOSER = {
         'token': 'djoser.serializers.TokenSerializer',
     },
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

@@ -5,6 +5,14 @@ from recipes.models import Recipe
 from .models import Subscription, User
 
 
+class LimitedListSerializer(serializers.ListSerializer):
+    """Сериализатор для ограничения выдачи рецептов в подписках"""
+
+    def to_representation(self, data):
+        data = data.all()[:3]
+        return super(LimitedListSerializer, self).to_representation(data)
+
+
 class UserSerializer(serializers.ModelSerializer):
     """Сериализатор модели User"""
     is_subscribed = serializers.SerializerMethodField()
@@ -61,6 +69,7 @@ class RecipeSimpleSerializer(serializers.ModelSerializer):
     """Сериализатор модели Recipe вывода данных о рецепте"""
 
     class Meta:
+        list_serializer_class = LimitedListSerializer
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time',)
 

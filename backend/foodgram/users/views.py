@@ -90,5 +90,9 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
     """Вьюсет для получения Подписок."""
     permission_classes = (IsAuthenticated,)
     pagination_class = PageNumberPagination
-    queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Subscription.objects.filter(user=user)
+        return queryset

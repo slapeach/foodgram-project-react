@@ -6,29 +6,26 @@ services:
     volumes:
       - /var/lib/postgresql/data/
     env_file:
-      - ../.env
-    environment:
-      POSTGRES_DB: "foodgram"
-      POSTGRES_USER: "foodgram_user"
-      POSTGRES_PASSWORD: "dbuserpass"
-    ports:
-      - "5432:5432"
-
+      - ./.env
   backend:
     build:
       context: ../
       dockerfile: backend/foodgram/Dockerfile
+    image: alzania/foodgram_backend
+    restart: always
     volumes:
       - static_value:/app/backend_static/
       - media_value:/app/backend_media/
     depends_on:
       - db
     env_file:
-      - ../.env
+      - ./.env
   frontend:
     build:
       context: ../frontend
       dockerfile: Dockerfile
+    image: alzania/foodgram_frontend
+    restart: always
     volumes:
       - ../frontend/:/app/result_build/
   nginx:

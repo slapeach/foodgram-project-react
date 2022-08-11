@@ -9,6 +9,7 @@ from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
                             ShoppingCart, Tag)
 from .filters import IngredientFilter, RecipeFilter
 from .mixins import AddDelRecipeViewMixin, ListCreateDestroyMixin
+from .paginator import RecipeResultsSetPagination
 from .permissions import IsAdminOrReadOnly
 from .serializers import (FavoriteRecipeSerializer, IngredientSerializer,
                           RecipeCreateSerializer, RecipeSerializer,
@@ -52,6 +53,7 @@ class RecipeViewSet(viewsets.ModelViewSet, AddDelRecipeViewMixin):
     permission_classes = [AllowAny]
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
+    pagination_class = RecipeResultsSetPagination
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:

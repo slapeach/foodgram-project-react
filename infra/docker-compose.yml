@@ -11,7 +11,7 @@ services:
     # build:
     #   context: ../
     #   dockerfile: backend/foodgram/Dockerfile
-    image: alzania/foodgram_backend
+    image: alzania/foodgram_backend:latest
     restart: always
     volumes:
       - static_value:/app/backend_static/
@@ -24,7 +24,7 @@ services:
     # build:
     #   context: ../frontend
     #   dockerfile: Dockerfile
-    image: alzania/foodgram_frontend
+    image: alzania/foodgram_frontend:latest
     restart: always
     volumes:
       - ../frontend/:/app/result_build/

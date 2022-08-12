@@ -18,7 +18,7 @@ services:
     env_file:
       - ./.env
   frontend:
-    image: alzania/infra_frontend
+    image: alzania/infra_frontend:v1.08.2022
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:

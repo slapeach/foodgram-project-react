@@ -8,7 +8,7 @@ services:
     env_file:
       - ./.env
   backend:
-    image: alzania/foodgram_backend:latest
+    image: alzania/infra_backend
     restart: always
     volumes:
       - static_value:/app/backend_static/
@@ -18,10 +18,11 @@ services:
     env_file:
       - ./.env
   frontend:
-    image: alzania/foodgram_frontend:latest
-    restart: always
+    image: alzania/infra_frontend
     volumes:
       - ../frontend/:/app/result_build/
+    depends_on:
+      - backend
   nginx:
     image: nginx:1.19.3
     ports:

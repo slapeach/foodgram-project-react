@@ -9,8 +9,11 @@ class LimitedListSerializer(serializers.ListSerializer):
     """Сериализатор для ограничения выдачи рецептов в подписках"""
 
     def to_representation(self, data):
-        data = data.all()[:3]
-        return super(LimitedListSerializer, self).to_representation(data)
+        recipes_limit = self.context['request'].query_params.get(
+            'recipes_limit'
+        )
+        data = data.all()[:int(recipes_limit)]
+        return super().to_representation(data)
 
 
 class UserSerializer(serializers.ModelSerializer):

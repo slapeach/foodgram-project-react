@@ -78,6 +78,5 @@ DB_PORT=5432
 ```
 
 
-Проект доступен на сервере 51.250.17.195 и foodgram.hopto.org
 
 ![CI](https://github.com/slapeach/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg)
